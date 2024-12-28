@@ -1,28 +1,32 @@
+import os
 import psycopg2
-import pandas as pd
-from datetime import datetime
 
+from dotenv import load_dotenv
+
+import py_scripts.scd.staging as staging
+from py_scripts.loader import load_files
 
 if __name__ == '__main__':
-    # can be replaced on datetime.today()
-    date = datetime(2021, 3, 1).strftime('%d%m%Y')
+    load_dotenv()
 
-    transactions = pd.read_csv(f"data/transactions_{date}.txt")
-    terminals = pd.read_excel(f"data/terminals_{date}.xlsx")
-    passport_blacklist = pd.read_excel(f"data/passport_blacklist_{date}.xlsx")
+    data = load_files('data')
+    if data is None:
+        exit(1)
 
+    pg_dsn = {
+        'database': os.getenv('DB_DATABASE'),
+        'host': os.getenv("DB_HOST"),
+        'user': os.getenv('DB_USER'),
+        'password': os.getenv('DB_PASSWORD'),
+        'port': os.getenv('DB_PORT')
+    }
 
-    with psycopg2.connect(
-        database = "db",
-        host =     "rc1b-o3ezvcgz5072sgar.mdb.yandexcloud.net",
-        user =     "hseguest",
-        password = "hsepassword",
-        port =     "6432"
-    ) as conn:
+    with psycopg2.connect(**pg_dsn) as conn:
         conn.autocommit = False
-        with conn.cursor() as cursor:
-            print(cursor)
 
+        with conn.cursor() as cursor:
+            staging.clean(cursor)
+            staging.upload(data, cursor)
 
 # # Выполнение SQL кода в базе данных без возврата результата
 # cursor.execute( "INSERT INTO de11an.testtable( id, val ) VALUES ( 1, 'ABC' )" )
