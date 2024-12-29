@@ -9,4 +9,4 @@ class InputData:
     date: datetime
     transactions: DataFrame
     terminals: DataFrame
-    passport_blacklist: DataFrame
+    blacklist: DataFrame
