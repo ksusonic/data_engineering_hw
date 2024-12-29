@@ -9,7 +9,8 @@ create table if not exists dndx_stg_clients
     passport_num      varchar,
     passport_valid_to date,
     phone             varchar,
-    create_dt         date
+    create_dt         date,
+    update_dt         date
 );
 
 create table if not exists dndx_dwh_dim_clients
@@ -72,7 +73,7 @@ create table if not exists dndx_stg_terminals
     update_dt        date
 );
 
-create table if not exists dndx_dwh_fact_terminals
+create table if not exists dndx_dwh_dim_terminals
 (
     like dndx_stg_terminals including all
 );
@@ -91,6 +92,11 @@ create table if not exists dndx_stg_transactions
     update_dt   date
 );
 
+create table if not exists dndx_dwh_dim_transactions
+(
+    like dndx_stg_transactions including all
+);
+
 create table if not exists dndx_dwh_fact_transactions
 (
     trans_id    varchar primary key,
@@ -100,42 +106,39 @@ create table if not exists dndx_dwh_fact_transactions
     amt         decimal(18, 2),
     oper_result varchar,
     terminal    varchar,
-    source_dt   date
+    create_dt   date,
+    update_dt   date
 );
+
 
 --
 create table if not exists dndx_stg_blacklist
 (
     passport  varchar primary key,
     entry_dt  date,
-    create_dt date
+    create_dt date,
+    update_dt date
 );
 
-create table if not exists dndx_dwh_fact_blacklist
+create table if not exists dndx_dwh_dim_blacklist
 (
-    entry_dt  date,
-    passport  varchar,
-    source_dt date
+    like dndx_stg_blacklist including all
+);
+
+create table if not exists dndx_dwh_fact_passport_blacklist
+(
+    passport_num varchar primary key,
+    entry_dt     date,
+    source_dt    date
 );
 
 --
-create table if not exists dndx_dwh_dim_terminals
-(
-    terminal_id      varchar primary key,
-    terminal_type    varchar,
-    terminal_city    varchar,
-    terminal_address varchar,
-    create_dt        date,
-    update_dt        date
-);
-
-
 create table if not exists dndx_rep_fraud
 (
     event_dt   timestamp,
     passport   varchar,
     fio        varchar,
     phone      varchar,
-    event_type integer,
+    event_type varchar,
     report_dt  date
 );

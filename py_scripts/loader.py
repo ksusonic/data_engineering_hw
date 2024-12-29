@@ -1,6 +1,6 @@
 from datetime import datetime
 from re import compile
-from os import listdir
+from os import listdir, rename
 
 from pandas import read_excel, read_csv, DataFrame
 
@@ -22,20 +22,32 @@ def load_files(dirname: str):
 
             return InputData(
                 date=parsed_date,
-                transactions=converted_transactions(transactions),
-                terminals=converted_terminals(terminals),
-                blacklist=converted_passport_blacklist(passport_blacklist),
+                transactions=converted_transactions(transactions, parsed_date),
+                terminals=converted_terminals(terminals, parsed_date),
+                blacklist=converted_passport_blacklist(passport_blacklist, parsed_date),
             )
 
 
-def converted_transactions(df: DataFrame) -> DataFrame:
+def archive_files(dirname: str, archive_dirname: str, date: datetime):
+    rename(f"{dirname}/transactions_{date}.txt", f'{archive_dirname}/transactions_{date}.txt')
+    rename(f"{dirname}/transactions_{date}.txt", f'{archive_dirname}/transactions_{date}.txt')
+    rename(f"{dirname}/transactions_{date}.txt", f'{archive_dirname}/transactions_{date}.txt')
+
+
+def converted_transactions(df: DataFrame, date: datetime) -> DataFrame:
     df["amount"] = df["amount"].str.replace(",", ".", regex=False).astype(float)
+    df['create_dt'] = date
+    df['update_dt'] = datetime.now()
     return df
 
 
-def converted_terminals(df: DataFrame) -> DataFrame:
+def converted_terminals(df: DataFrame, date: datetime) -> DataFrame:
+    df['create_dt'] = date
+    df['update_dt'] = datetime.now()
     return df
 
 
-def converted_passport_blacklist(df: DataFrame) -> DataFrame:
+def converted_passport_blacklist(df: DataFrame, date: datetime) -> DataFrame:
+    df['create_dt'] = date
+    df['update_dt'] = datetime.now()
     return df

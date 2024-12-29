@@ -1,13 +1,14 @@
 import logging
 import os
+
 import psycopg2
 
 from dotenv import load_dotenv
 from psycopg2.extras import LoggingConnection
 
-import py_scripts.scd.staging as staging
-from py_scripts.loader import load_files
-from py_scripts.scd import ddl
+from py_scripts.loader import load_files, archive_files
+from py_scripts.scd import ddl, dwh, staging
+from py_scripts import fraud
 
 if __name__ == "__main__":
     load_dotenv()
@@ -16,6 +17,7 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
     data_dir = os.getenv("DATA_DIR") or "data"
+    data_archive_dir = os.getenv("DATA_ARCHIVE_DIR") or "archive"
     ddl_file = os.getenv("DDL") or "main.ddl"
 
     data = load_files(data_dir)
@@ -47,38 +49,31 @@ if __name__ == "__main__":
 
             logger.info("cleaning tables...")
             staging.clean(cursor)
-            conn.commit()
 
-            logger.info("renewing staging tables...")
+            logger.info("renewing clients, accounts, cards tables...")
             staging.renew_db_staging(cursor)
 
-            logger.info("uploading staging data from files...")
-            staging.upload(data, cursor)
+            logger.info("uploading transactions...")
+            staging.upload_transactions(data, cursor)
 
-# # Выполнение SQL кода в базе данных без возврата результата
-# cursor.execute( "INSERT INTO de11an.testtable( id, val ) VALUES ( 1, 'ABC' )" )
-# conn.commit()
+            logger.info("uploading terminals...")
+            staging.upload_terminals(data, cursor)
 
-# # Выполнение SQL кода в базе данных с возвратом результата
-# cursor.execute( "SELECT * FROM de11an.testtable" )
-# records = cursor.fetchall()
+            logger.info("uploading blacklists...")
+            staging.upload_blacklist(data, cursor)
+            conn.commit()
 
-# for row in records:
-# 	print( row )
+            logger.info("processing dim-tables...")
+            dwh.dim_tables(cursor)
+            conn.commit()
 
-# ####################################################
+            logger.info("processing fact-tables...")
+            dwh.fact_tables(cursor)
+            conn.commit()
 
-# # Формирование DataFrame
-# names = [ x[0] for x in cursor.description ]
-# df = pd.DataFrame( records, columns = names )
+            logger.info("generating fraud report...")
+            fraud.expired_bad_passport(cursor, data.date)
 
-# # Запись в файл
-# df.to_excel( 'pandas_out.xlsx', sheet_name='sheet1', header=True, index=False )
+    logger.info("Fraud report created in table: 'dndx_rep_fraud'")
 
-# ####################################################
-
-# # Чтение из файла
-# df = pd.read_excel( 'pandas.xlsx', sheet_name='sheet1', header=0, index_col=None )
-
-# # Запись DataFrame в таблицу базы данных
-# cursor.executemany( "INSERT INTO de11an.testtable( id, val ) VALUES( %s, %s )", df.values.tolist() )
+    archive_files(data_dir, data_archive_dir, data.date)
