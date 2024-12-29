@@ -29,25 +29,34 @@ def load_files(dirname: str):
 
 
 def archive_files(dirname: str, archive_dirname: str, date: datetime):
-    rename(f"{dirname}/transactions_{date}.txt", f'{archive_dirname}/transactions_{date}.txt')
-    rename(f"{dirname}/transactions_{date}.txt", f'{archive_dirname}/transactions_{date}.txt')
-    rename(f"{dirname}/transactions_{date}.txt", f'{archive_dirname}/transactions_{date}.txt')
+    rename(
+        f"{dirname}/transactions_{date}.txt",
+        f"{archive_dirname}/transactions_{date}.txt",
+    )
+    rename(
+        f"{dirname}/transactions_{date}.txt",
+        f"{archive_dirname}/transactions_{date}.txt",
+    )
+    rename(
+        f"{dirname}/transactions_{date}.txt",
+        f"{archive_dirname}/transactions_{date}.txt",
+    )
 
 
 def converted_transactions(df: DataFrame, date: datetime) -> DataFrame:
     df["amount"] = df["amount"].str.replace(",", ".", regex=False).astype(float)
-    df['create_dt'] = date
-    df['update_dt'] = datetime.now()
+    df["create_dt"] = date
+    df["update_dt"] = datetime.now()
     return df
 
 
 def converted_terminals(df: DataFrame, date: datetime) -> DataFrame:
-    df['create_dt'] = date
-    df['update_dt'] = datetime.now()
+    df["create_dt"] = date
+    df["update_dt"] = datetime.now()
     return df
 
 
 def converted_passport_blacklist(df: DataFrame, date: datetime) -> DataFrame:
-    df['create_dt'] = date
-    df['update_dt'] = datetime.now()
+    df["create_dt"] = date
+    df["update_dt"] = datetime.now()
     return df
